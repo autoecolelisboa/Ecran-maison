@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Maison">
+<title>Écran maison</title>
+<style>
+/* Écrit en CSS « ancien » pour Safari d'iOS 12 (iPad mini 2) : pas de gap en flex, pas de clamp(). */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0e1620;color:#eef3f8;font-family:-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none}
+body.nuit{opacity:.45}
+#app{display:grid;grid-template-columns:55% 45%;grid-template-rows:1fr auto;height:100%;padding:5vh 3vw 1.5vh}
+#gauche{padding-right:3vw;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-justify-content:center;justify-content:center}
+#heure{font-size:12vw;font-weight:200;line-height:.95;letter-spacing:-.02em}
+#date{font-size:3.4vw;color:#9fb3c8;margin-top:1vh;text-transform:capitalize}
+#maintenant{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;margin-top:2vh}
+#maintenant svg{width:11vw;height:11vw;margin-right:2vw}
+#temp{font-size:8vw;font-weight:300;line-height:1}
+#desc{font-size:2.4vw;color:#c9d6e3}
+#details{font-size:1.8vw;color:#8aa0b6;margin-top:.5vh}
+#heures{display:grid;grid-template-columns:repeat(6,1fr);margin-top:2.5vh;background:#16212d;border-radius:14px;padding:1.5vh 1vw}
+.h{text-align:center;font-size:1.6vw;color:#9fb3c8}
+.h svg{width:4.5vw;height:4.5vw;display:block;margin:.5vh auto}
+.h b{display:block;color:#eef3f8;font-size:2vw;font-weight:500}
+.h i{font-style:normal;color:#5fb0ff;font-size:1.4vw}
+#droite{display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-justify-content:center;justify-content:center}
+.carte{background:#16212d;border-radius:14px;padding:1.6vh 2vw;margin-bottom:1.5vh}
+.titre{font-size:1.6vw;color:#7f95ab;margin-bottom:1vh}
+.jour{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;padding:.5vh 0;border-top:1px solid #223142;font-size:2vw}
+.jour:first-of-type{border-top:0}
+.jour .n{width:22%;text-transform:capitalize}
+.jour svg{width:3.6vw;height:3.6vw;margin-right:1.5vw}
+.jour .p{width:18%;color:#5fb0ff;font-size:1.6vw}
+.jour .t{-webkit-flex:1;flex:1;text-align:right}
+.jour .t span{color:#7f95ab;margin-left:1vw}
+#rappels li{list-style:none;font-size:2vw;padding:.9vh 0;border-top:1px solid #223142;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center}
+#rappels li:first-child{border-top:0}
+#rappels li:before{content:"";width:1.1vw;height:1.1vw;border-radius:50%;background:#ffc93c;margin-right:1.2vw;-webkit-flex:none;flex:none}
+#rappels li.fait{color:#5d7086;text-decoration:line-through}
+#rappels li.fait:before{background:#3a4b5e}
+#bandeau{grid-column:1 / 3;background:#ffc93c;color:#1b1400;border-radius:14px;padding:1vh 2vw;font-size:2vw;font-weight:600;text-align:center;margin-top:.5vh}
+#bandeau:empty{display:none}
+#pieces{display:grid;grid-template-columns:repeat(3,1fr);grid-column-gap:1vw}
+.piece{background:#0e1620;border-radius:10px;padding:1vh .8vw;text-align:center}
+.piece .nom{font-size:1.4vw;color:#9fb3c8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.piece .t{font-size:3.2vw;font-weight:300;line-height:1.1}
+.piece .hu{font-size:1.4vw;color:#5fb0ff}
+.piece .bat{font-size:1.2vw;color:#ff8a7a}
+.etat{display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;font-size:1.8vw;padding:.8vh 0;border-top:1px solid #223142}
+.etat:first-child{border-top:0}
+.etat .l{-webkit-flex:1;flex:1;margin-right:1vw}
+.etat .v{font-weight:600}
+.v.ok{color:#7fd88f}.v.alerte{color:#ff8a7a}.v.gris{color:#5d7086}
+#lignes{margin-top:1.2vh}
+#garageBtn{display:block;width:100%;margin-top:1.2vh;font-size:2vw;font-weight:600;padding:1.4vh 0;border-radius:10px;border:0;background:#33475c;color:#fff;-webkit-appearance:none}
+#garageBtn.confirmer{background:#ff8a3c;color:#1b1400}
+#maisonMsg{font-size:1.3vw;color:#7f95ab;margin-top:.6vh;min-height:1.6vh}
+#alerteCO{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#c0182b;color:#fff;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;text-align:center;font-size:5vw;font-weight:700;padding:5vw}
+#alerteCO.on{display:-webkit-flex;display:flex}
+#ville{position:absolute;top:1vh;left:3vw;font-size:1.6vw;color:#7f95ab;padding:1vh 1vw}
+#etat{position:absolute;top:1.5vh;right:3vw;font-size:1.2vw;color:#4c6075}
+#reglages{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(5,10,15,.85);-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center}
+#reglages.ouvert{display:-webkit-flex;display:flex}
+#boite{background:#1b2735;border-radius:16px;padding:24px;width:80%;max-width:640px}
+#boite h2{font-size:22px;margin-bottom:14px}
+#boite label{display:block;font-size:15px;color:#9fb3c8;margin:12px 0 4px}
+#boite input,#boite textarea{width:100%;font-size:17px;padding:10px;border-radius:10px;border:1px solid #33475c;background:#0e1620;color:#eef3f8;font-family:inherit;-webkit-user-select:text;user-select:text}
+#boite textarea{height:120px}
+#boite .btns{text-align:right;margin-top:16px}
+#boite button{font-size:17px;padding:12px 22px;border-radius:10px;border:0;margin-left:8px;background:#33475c;color:#fff}
+#boite button.ok{background:#ffc93c;color:#1b1400;font-weight:600}
+#erreur{color:#ff8a7a;font-size:15px;margin-top:8px;min-height:18px}
+@media (orientation:portrait){
+ #app{grid-template-columns:100%;grid-template-rows:auto auto auto}
+ #gauche{padding-right:0}
+ #heure{font-size:24vw}#date{font-size:5vw}#temp{font-size:12vw}#desc{font-size:3.6vw}#details{font-size:2.8vw}
+ .h{font-size:2.6vw}.h b{font-size:3.2vw}.h i{font-size:2.2vw}.h svg{width:7vw;height:7vw}
+ .titre{font-size:2.6vw}.jour{font-size:3.4vw}.jour svg{width:6vw;height:6vw}.jour .p{font-size:2.6vw}
+ #rappels li{font-size:3.4vw}#bandeau{grid-column:1;font-size:3.4vw}#ville{font-size:2.8vw}
+}
+</style>
+</head>
+<body>
+<div id="app">
+ <div id="gauche">
+  <div id="heure">--:--</div>
+  <div id="date"></div>
+  <div id="maintenant"><span id="icone"></span><div><div id="temp">--°</div><div id="desc">Chargement de la météo…</div><div id="details"></div></div></div>
+  <div id="heures"></div>
+  <div class="carte" style="margin-top:2vh;margin-bottom:0"><div class="titre">Rappels — touchez pour cocher</div><ul id="rappels"></ul></div>
+ </div>
+ <div id="droite">
+  <div class="carte" id="maison"><div class="titre">Maison</div>
+   <div id="pieces"></div>
+   <div id="lignes"></div>
+   <button id="garageBtn" style="display:none">Garage : ouvrir / fermer</button>
+   <div id="maisonMsg">Entrez le code PIN dans Réglages pour afficher la maison.</div>
+  </div>
+  <div class="carte"><div class="titre">Prochains jours</div><div id="jours"></div></div>
+ </div>
+ <div id="bandeau"></div>
+</div>
+<div id="ville">⚙︎ Réglages</div>
+<div id="alerteCO">⚠️ ALERTE MONOXYDE DE CARBONE<br>Ouvrez les fenêtres, sortez et appelez le 18 ou le 112</div>
+<div id="etat"></div>
+
+<div id="reglages"><div id="boite">
+ <h2>Réglages de l'écran</h2>
+ <label for="fVille">Ville pour la météo</label>
+ <input id="fVille" type="text" placeholder="ex. Lyon">
+ <label for="fRappels">Rappels (un par ligne)</label>
+ <textarea id="fRappels"></textarea>
+ <label for="fBandeau">Message du bandeau (laisser vide pour le masquer)</label>
+ <input id="fBandeau" type="text">
+ <label for="fPin">Code PIN de la maison (Smart Life)</label>
+ <input id="fPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="4 chiffres">
+ <div id="erreur"></div>
+ <div class="btns"><button id="annuler">Annuler</button><button id="valider" class="ok">Enregistrer</button></div>
+</div></div>
+
+<script>
+(function(){
+var JOURS=["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"];
+var MOIS=["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+var defaut={ville:"Paris",lat:48.8566,lon:2.3522,rappels:["Sortir les poubelles mardi soir","Arroser les plantes","Rendez-vous dentiste jeudi 10h"],faits:[],pin:"",bandeau:"Bienvenue ! Touchez « Réglages » en haut à droite pour personnaliser cet écran."};
+var cfg=charger();
+
+function charger(){try{var s=localStorage.getItem("ecranMaison");if(s){var o=JSON.parse(s);for(var k in defaut){if(!(k in o))o[k]=defaut[k];}return o;}}catch(e){}return JSON.parse(JSON.stringify(defaut));}
+function sauver(){try{localStorage.setItem("ecranMaison",JSON.stringify(cfg));}catch(e){}}
+function $(id){return document.getElementById(id);}
+function esc(t){return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function deux(n){return n<10?"0"+n:""+n;}
+
+/* --- Icônes météo dessinées --- */
+var NUAGE='<path d="M18 48h30a11 11 0 0 0 0-22 15 15 0 0 0-29 3 10 10 0 0 0-1 19z" fill="#cfd8e3"/>';
+var SOLEIL='<circle cx="32" cy="32" r="12" fill="#ffc93c"/><g stroke="#ffc93c" stroke-width="3.5" stroke-linecap="round"><path d="M32 8v6M32 50v6M8 32h6M50 32h6M15 15l4 4M45 45l4 4M15 49l4-4M45 19l4-4"/></g>';
+function icone(c){
+ var s='<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">';
+ if(c===0)s+=SOLEIL;
+ else if(c<=2)s+='<g transform="translate(10 -6) scale(.75)">'+SOLEIL+'</g>'+NUAGE;
+ else if(c===3)s+=NUAGE;
+ else if(c===45||c===48)s+='<g stroke="#9fb3c8" stroke-width="4" stroke-linecap="round"><path d="M12 24h40M8 34h44M14 44h36"/></g>';
+ else if((c>=71&&c<=77)||c===85||c===86)s+='<g transform="translate(0 -6)">'+NUAGE+'</g><g fill="#fff"><circle cx="22" cy="52" r="3"/><circle cx="32" cy="57" r="3"/><circle cx="42" cy="52" r="3"/></g>';
+ else if(c>=95)s+='<g transform="translate(0 -6)">'+NUAGE+'</g><path d="M34 44l-8 11h7l-3 9 10-13h-7l3-7z" fill="#ffc93c"/>';
+ else s+='<g transform="translate(0 -6)">'+NUAGE+'</g><g stroke="#5fb0ff" stroke-width="3.5" stroke-linecap="round"><path d="M22 48l-3 8M32 48l-3 8M42 48l-3 8"/></g>';
+ return s+'</svg>';
+}
+function texte(c){
+ if(c===0)return"Ensoleillé";if(c===1)return"Plutôt dégagé";if(c===2)return"Partiellement nuageux";if(c===3)return"Couvert";
+ if(c===45||c===48)return"Brouillard";if(c>=51&&c<=57)return"Bruine";if(c>=61&&c<=67)return"Pluie";
+ if(c>=71&&c<=77)return"Neige";if(c>=80&&c<=82)return"Averses";if(c===85||c===86)return"Averses de neige";if(c>=95)return"Orage";return"";
+}
+
+/* --- Horloge --- */
+function horloge(){
+ var d=new Date();
+ $("heure").textContent=d.getHours()+":"+deux(d.getMinutes());
+ $("date").textContent=JOURS[d.getDay()]+" "+d.getDate()+" "+MOIS[d.getMonth()];
+ var h=d.getHours();document.body.className=(h>=23||h<6)?"nuit":"";
+}
+
+/* --- Météo (Open-Meteo, gratuit, sans clé) --- */
+function get(url,ok,ko){
+ var x=new XMLHttpRequest();x.open("GET",url,true);x.timeout=15000;
+ x.onload=function(){if(x.status===200){try{ok(JSON.parse(x.responseText));}catch(e){ko&&ko();}}else{ko&&ko();}};
+ x.onerror=x.ontimeout=function(){ko&&ko();};x.send();
+}
+function meteo(){
+ var u="https://api.open-meteo.com/v1/forecast?latitude="+cfg.lat+"&longitude="+cfg.lon+
+  "&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m"+
+  "&hourly=temperature_2m,weather_code,precipitation_probability"+
+  "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max"+
+  "&timezone=auto&forecast_days=6";
+ get(u,afficher,function(){$("etat").textContent="Météo indisponible (pas de connexion ?) — nouvel essai dans 5 min";setTimeout(meteo,300000);});
+}
+function afficher(m){
+ var c=m.current;
+ $("icone").innerHTML=icone(c.weather_code);
+ $("temp").textContent=Math.round(c.temperature_2m)+"°";
+ $("desc").textContent=texte(c.weather_code)+" à "+cfg.ville;
+ $("details").textContent="Ressenti "+Math.round(c.apparent_temperature)+"° · Vent "+Math.round(c.wind_speed_10m)+" km/h · Humidité "+c.relative_humidity_2m+" %";
+ // 6 prochaines heures
+ var h=m.hourly,maint=c.time.slice(0,13),i0=0,html="";
+ for(var i=0;i<h.time.length;i++){if(h.time[i].slice(0,13)>=maint){i0=i+1;break;}}
+ for(var j=i0;j<i0+6&&j<h.time.length;j++){
+  var p=h.precipitation_probability[j];
+  html+='<div class="h">'+parseInt(h.time[j].slice(11,13),10)+'h'+icone(h.weather_code[j])+'<b>'+Math.round(h.temperature_2m[j])+'°</b><i>'+(p>=20?p+' %':'&nbsp;')+'</i></div>';
+ }
+ $("heures").innerHTML=html;
+ // jours
+ var d=m.daily,hj="";
+ for(var k=1;k<d.time.length&&k<5;k++){
+  var p2=d.time[k].split("-"),dt=new Date(+p2[0],+p2[1]-1,+p2[2]);
+  hj+='<div class="jour"><span class="n">'+(k===1?"demain":JOURS[dt.getDay()].slice(0,3)+".")+'</span>'+icone(d.weather_code[k])+
+   '<span class="p">'+(d.precipitation_probability_max[k]>=20?d.precipitation_probability_max[k]+" %":"")+'</span>'+
+   '<span class="t">'+Math.round(d.temperature_2m_max[k])+'°<span>'+Math.round(d.temperature_2m_min[k])+'°</span></span></div>';
+ }
+ $("jours").innerHTML=hj;
+ var n=new Date();$("etat").textContent="Météo mise à jour à "+n.getHours()+":"+deux(n.getMinutes());
+}
+
+/* --- Rappels et bandeau --- */
+function rappels(){
+ var html="";
+ for(var i=0;i<cfg.rappels.length;i++){
+  var f=cfg.faits.indexOf(cfg.rappels[i])>-1;
+  html+='<li data-i="'+i+'" class="'+(f?"fait":"")+'">'+esc(cfg.rappels[i])+'</li>';
+ }
+ $("rappels").innerHTML=html||'<li>Aucun rappel — ajoutez-en dans Réglages</li>';
+ $("bandeau").textContent=cfg.bandeau||"";
+}
+$("rappels").addEventListener("click",function(e){
+ var li=e.target;if(!li.getAttribute||li.getAttribute("data-i")===null)return;
+ var t=cfg.rappels[+li.getAttribute("data-i")],p=cfg.faits.indexOf(t);
+ if(p>-1)cfg.faits.splice(p,1);else cfg.faits.push(t);
+ sauver();rappels();
+});
+
+/* --- Réglages --- */
+$("ville").addEventListener("click",function(){
+ $("fVille").value=cfg.ville;$("fRappels").value=cfg.rappels.join("\n");$("fBandeau").value=cfg.bandeau;$("fPin").value=cfg.pin||"";$("erreur").textContent="";
+ $("reglages").className="ouvert";
+});
+$("annuler").addEventListener("click",function(){$("reglages").className="";});
+$("valider").addEventListener("click",function(){
+ var lignes=$("fRappels").value.split("\n"),r=[];
+ for(var i=0;i<lignes.length;i++){var l=lignes[i].replace(/^\s+|\s+$/g,"");if(l)r.push(l);}
+ cfg.rappels=r;cfg.faits=cfg.faits.filter(function(t){return r.indexOf(t)>-1;});
+ cfg.bandeau=$("fBandeau").value;
+ cfg.pin=$("fPin").value.replace(/\s/g,"");
+ var v=$("fVille").value.replace(/^\s+|\s+$/g,"");
+ function fin(){sauver();rappels();meteo();maison();$("reglages").className="";}
+ if(v&&v.toLowerCase()!==cfg.ville.toLowerCase()){
+  $("erreur").textContent="Recherche de la ville…";
+  get("https://geocoding-api.open-meteo.com/v1/search?count=1&language=fr&format=json&name="+encodeURIComponent(v),function(g){
+   if(g.results&&g.results.length){var x=g.results[0];cfg.ville=x.name;cfg.lat=x.latitude;cfg.lon=x.longitude;fin();}
+   else $("erreur").textContent="Ville introuvable. Vérifiez l'orthographe.";
+  },function(){$("erreur").textContent="Pas de connexion, réessayez.";});
+ }else fin();
+});
+
+/* --- Maison : appareils Smart Life via le serveur tuya-maison --- */
+var SERVEUR="https://zgikelunzxrqlstjdrls.supabase.co/functions/v1/tuya-maison";
+var garageId="",garageArme=0;
+function val(etat,code){for(var i=0;i<etat.length;i++){if(etat[i].code===code)return etat[i].value;}return undefined;}
+function ligne(l,v,cl){return '<div class="etat"><span class="l">'+esc(l)+'</span><span class="v '+cl+'">'+esc(v)+'</span></div>';}
+function maison(){
+ if(!cfg.pin){$("maisonMsg").textContent="Entrez le code PIN dans Réglages pour afficher la maison.";return;}
+ get(SERVEUR+"?action=liste&pin="+encodeURIComponent(cfg.pin),function(r){
+  if(!r.ok){$("maisonMsg").textContent=r.erreur||"Erreur du serveur";return;}
+  var pieces="",lignes="",co=false,a=r.appareils;
+  for(var i=0;i<a.length;i++){
+   var d=a[i],nom=String(d.nom).replace(/^\s+|\s+$/g,""),e=d.etat||[];
+   if(d.categorie==="wsdcg"){
+    var t=val(e,"va_temperature"),h=val(e,"va_humidity"),b=val(e,"battery_percentage");
+    pieces+='<div class="piece"><div class="nom">'+esc(nom)+'</div><div class="t">'+(d.en_ligne&&t!==undefined?(t/10).toFixed(1).replace(".",",")+'°':'--')+'</div>'+
+     '<div class="hu">'+(h!==undefined?h+' %':'')+'</div>'+(b!==undefined&&b<25?'<div class="bat">Pile '+b+' %</div>':'')+'</div>';
+   }else if(d.categorie==="cobj"){
+    var s=val(e,"co_status");co=(s&&s!=="normal");
+    lignes+=ligne(nom,!d.en_ligne?"Hors ligne":(co?"ALERTE":"Normal"),!d.en_ligne?"gris":(co?"alerte":"ok"));
+   }else if(d.categorie==="mcs"){
+    var o=val(e,"doorcontact_state");
+    lignes+=ligne(nom,!d.en_ligne?"Hors ligne":(o?"Ouverte":"Fermée"),!d.en_ligne?"gris":(o?"alerte":"ok"));
+   }else if(d.categorie==="ckmkzq"){
+    garageId=d.id;var g=val(e,"doorcontact_state");
+    lignes+=ligne(nom,!d.en_ligne?"Hors ligne":(g?"Ouvert":"Fermé"),!d.en_ligne?"gris":(g?"alerte":"ok"));
+   }else if(d.categorie==="pir"){
+    lignes+=ligne(nom,!d.en_ligne?"Hors ligne":(val(e,"pir")==="pir"?"Courrier ?":"Rien"),!d.en_ligne?"gris":"ok");
+   }
+  }
+  $("pieces").innerHTML=pieces;$("lignes").innerHTML=lignes;
+  $("garageBtn").style.display=garageId?"block":"none";
+  $("alerteCO").className=co?"on":"";
+  var n=new Date();$("maisonMsg").textContent="Maison mise à jour à "+n.getHours()+":"+deux(n.getMinutes());
+ },function(){$("maisonMsg").textContent="Maison injoignable — nouvel essai dans 1 min";});
+}
+$("garageBtn").addEventListener("click",function(){
+ var b=$("garageBtn");
+ if(!garageArme){garageArme=1;b.className="confirmer";b.textContent="Touchez encore pour confirmer";
+  setTimeout(function(){garageArme=0;b.className="";b.textContent="Garage : ouvrir / fermer";},5000);return;}
+ garageArme=0;b.className="";b.textContent="Envoi…";
+ var x=new XMLHttpRequest();x.open("POST",SERVEUR,true);x.setRequestHeader("Content-Type","text/plain");
+ x.onload=function(){var ok=false;try{ok=JSON.parse(x.responseText).ok;}catch(e){}
+  b.textContent=ok?"Commande envoyée ✓":"Échec, réessayez";setTimeout(function(){b.textContent="Garage : ouvrir / fermer";maison();},4000);};
+ x.onerror=function(){b.textContent="Pas de connexion";setTimeout(function(){b.textContent="Garage : ouvrir / fermer";},4000);};
+ x.send(JSON.stringify({pin:cfg.pin,action:"commande",id:garageId,code:"switch_1",value:true}));
+});
+
+horloge();rappels();meteo();maison();
+setInterval(maison,60000);
+setInterval(horloge,10000);
+setInterval(meteo,15*60000);
+setTimeout(function(){location.reload();},6*3600000); // recharge toutes les 6 h pour rester fluide
+})();
+</script>
+</body>
+</html>
